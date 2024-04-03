@@ -1,4 +1,4 @@
-main: 		addi x3, x0, 10 		# x3 = 10 
+main:   addi x3, x0, 10 		# x3 = 10 
 		addi x4, x0, 12			# x4 = 12
 		or x5, x3, x4 			# x5 = (10 OR 12) = 14 
 		and x6, x3, x4 			# x5 = (10 AND 12) = 8		
