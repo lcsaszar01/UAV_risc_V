@@ -3,10 +3,12 @@ module riscv_pipeline #(
 ) (
     input logic clk,
     input logic reset,
+    
+    // DO WE NEDD A INSTRUCITON IMPUT LOGIC FUNC HERE?????
+
     // Instruction memory interface
     output logic [DATA_WIDTH-1:0] instr_addr,
-    input logic [DATA_WIDTH-1:0] instr_data,
-    // Data memory interface
+    input logic [DATA_WIDTH-1:0] instr_data,    // Data memory interface
     output logic [DATA_WIDTH-1:0] data_addr,
     output logic [DATA_WIDTH-1:0] data_wdata,
     input logic [DATA_WIDTH-1:0] data_rdata,
@@ -23,6 +25,25 @@ module riscv_pipeline #(
         OPCODE_OP_IMM = 7'b0010011,
         OPCODE_OP     = 7'b0110011
     } opcode_t;
+
+    //ALU Control
+    typedef enum logic [6:0]{  
+        ALU_LW = 4'b0010,
+        ALU_SW = 4'b0010,
+        ALU_BEQ = 4'b0110,
+        ALU_ADD = 4'b0010,
+        ALU_SUB = 4'b0110,
+        ALU_AND = 4'b0000,
+        ALU_OR = 4'b0001,
+        ALU_ALT = 4'b0111
+
+    } ALUcontrol0;
+    
+    ALUcontrol3 = 0
+    ALUcontrol2 = (F1 . ALUop1) + (ALUop0)
+    ALUcontrol1 = !ALUop1 + !F2
+    ALUcontrol0 = F0 . F3 . alu_op_t
+
 
     // ALU operations
     typedef enum logic [3:0] {
@@ -157,14 +178,31 @@ module riscv_pipeline #(
         endcase
     end
 
+    // Instruction Decode Stage with Hazard Detection
+    HazardDetectionUnit hazard_unit (
+        .opcode1(instr[6:0]), // Opcode of the current instruction
+        .opcode2(instr[6:0]), // Opcode of the next instruction
+        .rd1(instr[11:7]),    // Destination register of the current instruction
+        .rs2(instr[24:20]),   // Source register of the next instruction
+        .hazard(hazard)       // Hazard signal
+    );
+
     // Immediate generator
     always_comb begin
+        begin
+        if(hazard) //stall if hazard is detected
+        rs1Data = 0; // Set inputs to ALU to 0
+            rs2Data = 0;
+        end
+        else // Proceed normally
+        begin
         case (opcode)
             OPCODE_OP_IMM: imm_gen_out = {{20{IF_ID_instr[31]}}, IF_ID_instr[31:20]};
             OPCODE_LOAD  : imm_gen_out = {{20{IF_ID_instr[31]}}, IF_ID_instr[31:20]};
             OPCODE_STORE : imm_gen_out = {{20{IF_ID_instr[31]}}, IF_ID_instr[31:25], IF_ID_instr[11:7]};
             default      : imm_gen_out = '0;
         endcase
+        end
     end
 
     // ID/EX pipeline register
@@ -197,6 +235,7 @@ module riscv_pipeline #(
             ID_EX_reg_write <= reg_write;
         end
     end
+
 
     // EX stage
     logic [DATA_WIDTH-1:0] alu_result;
@@ -262,4 +301,30 @@ module riscv_pipeline #(
         end
     end
 
+endmodule
+
+
+// Hazard Detection Unit Module
+// Produced by chatGPT, modifed by team
+module HazardDetectionUnit (
+    input logic [6:0] opcode1, // Opcode of the first instruction
+    input logic [6:0] opcode2, // Opcode of the second instruction
+    input logic [4:0] rd1,     // Destination register of the first instruction
+    input logic [4:0] rs2,     // Source register of the second instruction
+    output logic hazard         // Hazard signal indicating a hazard
+);
+    // Data Hazard Detection Logic
+    always_comb
+    begin
+        // Check for read-after-write (RAW) hazard
+        if (opcode1 != 7'b0000011 && opcode2 != 7'b0000011) // Exclude load instructions
+        begin
+            if (rd1 != 5'b00000 && rd1 == rs2) // Check if destination register of first instruction matches source register of second instruction
+                hazard = 1'b1; // Hazard detected
+            else
+                hazard = 1'b0; // No hazard
+        end
+        else
+            hazard = 1'b0; // No hazard for load instructions
+    end
 endmodule
