@@ -26,25 +26,6 @@ module riscv_pipeline #(
         OPCODE_OP     = 7'b0110011
     } opcode_t;
 
-    //ALU Control
-    typedef enum logic [6:0]{  
-        ALU_LW = 4'b0010,
-        ALU_SW = 4'b0010,
-        ALU_BEQ = 4'b0110,
-        ALU_ADD = 4'b0010,
-        ALU_SUB = 4'b0110,
-        ALU_AND = 4'b0000,
-        ALU_OR = 4'b0001,
-        ALU_ALT = 4'b0111
-
-    } ALUcontrol0;
-    
-    ALUcontrol3 = 0
-    ALUcontrol2 = (F1 . ALUop1) + (ALUop0)
-    ALUcontrol1 = !ALUop1 + !F2
-    ALUcontrol0 = F0 . F3 . alu_op_t
-
-
     // ALU operations
     typedef enum logic [3:0] {
         ALU_ADD  = 4'b0000,
@@ -191,7 +172,7 @@ module riscv_pipeline #(
     always_comb begin
         begin
         if(hazard) //stall if hazard is detected
-        rs1Data = 0; // Set inputs to ALU to 0
+            rs1Data = 0; // Set inputs to ALU to 0
             rs2Data = 0;
         end
         else // Proceed normally
@@ -314,17 +295,16 @@ module HazardDetectionUnit (
     output logic hazard         // Hazard signal indicating a hazard
 );
     // Data Hazard Detection Logic
-    always_comb
-    begin
+    always_comb begin
         // Check for read-after-write (RAW) hazard
-        if (opcode1 != 7'b0000011 && opcode2 != 7'b0000011) // Exclude load instructions
-        begin
-            if (rd1 != 5'b00000 && rd1 == rs2) // Check if destination register of first instruction matches source register of second instruction
+        if (opcode1 != 7'b0000011 && opcode2 != 7'b0000011) begin // Exclude load instructions
+            if (rd1 != 5'b00000 && rd1 == rs2) begin // Check if destination register of first instruction matches source register of second instruction
                 hazard = 1'b1; // Hazard detected
-            else
+            end else begin
                 hazard = 1'b0; // No hazard
-        end
-        else
+            end
+        end else begin
             hazard = 1'b0; // No hazard for load instructions
+        end
     end
 endmodule
