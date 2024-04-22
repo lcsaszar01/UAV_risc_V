@@ -3,8 +3,6 @@ module riscv_pipeline #(
 ) (
     input logic clk,
     input logic reset,
-    
-    // DO WE NEDD A INSTRUCITON IMPUT LOGIC FUNC HERE?????
 
     // Instruction memory interface
     output logic [DATA_WIDTH-1:0] instr_addr,
@@ -71,6 +69,9 @@ module riscv_pipeline #(
     alu_src_b_t alu_src;
     logic mem_read, mem_write, reg_write;
     logic [DATA_WIDTH-1:0] imm_gen_out;
+
+    //STALL Option Conditions
+    //stall:= 
 
     // IF stage
     logic [DATA_WIDTH-1:0] pc_reg, pc_next;
