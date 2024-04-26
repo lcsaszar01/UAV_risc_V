@@ -176,7 +176,7 @@ module riscv_pipeline #(
             rs1Data = 0; // Set inputs to ALU to 0
             rs2Data = 0;
         end
-        else // Proceed normally
+        else Proceed// Proceed normally
         begin
         case (opcode)
             OPCODE_OP_IMM: imm_gen_out = {{20{IF_ID_instr[31]}}, IF_ID_instr[31:20]};
