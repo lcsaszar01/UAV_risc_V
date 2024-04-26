@@ -289,11 +289,11 @@ endmodule
 // Hazard Detection Unit Module
 // Produced by chatGPT, modifed by team
 module HazardDetectionUnit (
-    input logic [6:0] opcode1, // Opcode of the first instruction
-    input logic [6:0] opcode2, // Opcode of the second instruction
+    input logic [7:0] opcode1, // Opcode of the first instruction
+    input logic [7:0] opcode2, // Opcode of the second instruction
     input logic [4:0] rd1,     // Destination register of the first instruction
     input logic [4:0] rs2,     // Source register of the second instruction
-    output logic hazard         // Hazard signal indicating a hazard
+    output logic hazard        // Hazard signal indicating a hazard
 );
     // Data Hazard Detection Logic
     always_comb begin
@@ -301,10 +301,12 @@ module HazardDetectionUnit (
         if (opcode1 != 7'b0000011 && opcode2 != 7'b0000011) begin // Exclude load instructions
             if (rd1 != 5'b00000 && rd1 == rs2) begin // Check if destination register of first instruction matches source register of second instruction
                 hazard = 1'b1; // Hazard detected
-            end else begin
+            end 
+			else begin
                 hazard = 1'b0; // No hazard
             end
-        end else begin
+        end 
+		else begin
             hazard = 1'b0; // No hazard for load instructions
         end
     end
