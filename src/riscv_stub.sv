@@ -75,18 +75,19 @@ module riscv_pipeline #(
 
     // IF stage
     logic [DATA_WIDTH-1:0] pc_reg, pc_next;
-    always_ff @(posedge clk or posedge reset) begin
+    always_ff @(posedge clk or posedge reset) begin //IF
         if (reset) begin
             pc_reg <= '0;
         end else begin
             pc_reg <= pc_next;
         end
     end
-    assign pc_next = pc_reg + 4;
-    assign instr_addr = pc_reg;
+
+//    assign pc_next = pc_reg + 4;
+//    assign instr_addr = pc_reg;
 
     // IF/ID pipeline register
-    always_ff @(posedge clk or posedge reset) begin
+    always_ff @(posedge clk or posedge reset) //begin //ID
         if (reset) begin
             IF_ID_pc <= '0;
             IF_ID_instr <= '0;
@@ -94,7 +95,7 @@ module riscv_pipeline #(
             IF_ID_pc <= pc_reg;
             IF_ID_instr <= instr_data;
         end
-    end
+//    end
 
     // ID stage
     assign opcode = opcode_t'(IF_ID_instr[6:0]);
@@ -162,8 +163,8 @@ module riscv_pipeline #(
 
     // Instruction Decode Stage with Hazard Detection
     HazardDetectionUnit hazard_unit (
-        .opcode1(instr[6:0]), // Opcode of the current instruction
-        .opcode2(instr[6:0]), // Opcode of the next instruction
+        .opcode1(instr[7:0]), // Opcode of the current instruction
+        .opcode2(instr[7:0]), // Opcode of the next instruction
         .rd1(instr[11:7]),    // Destination register of the current instruction
         .rs2(instr[24:20]),   // Source register of the next instruction
         .hazard(hazard)       // Hazard signal
@@ -172,23 +173,21 @@ module riscv_pipeline #(
     // Immediate generator
     always_comb begin
         begin
-        if(hazard) //stall if hazard is detected
-            rs1Data = 0; // Set inputs to ALU to 0
+        if(hazard) begin //stall if hazard is detected
+            rs1Data = 0; 	// Set inputs to ALU to 0
             rs2Data = 0;
-        end
-        else Proceed// Proceed normally
-        begin
-        case (opcode)
-            OPCODE_OP_IMM: imm_gen_out = {{20{IF_ID_instr[31]}}, IF_ID_instr[31:20]};
-            OPCODE_LOAD  : imm_gen_out = {{20{IF_ID_instr[31]}}, IF_ID_instr[31:20]};
-            OPCODE_STORE : imm_gen_out = {{20{IF_ID_instr[31]}}, IF_ID_instr[31:25], IF_ID_instr[11:7]};
-            default      : imm_gen_out = '0;
-        endcase
+            end else begin // THE ERROR IS OCCURING HERE!
+			case (opcode)
+                OPCODE_OP_IMM: imm_gen_out = {{20{IF_ID_instr[31]}}, IF_ID_instr[31:20]};
+                OPCODE_LOAD  : imm_gen_out = {{20{IF_ID_instr[31]}}, IF_ID_instr[31:20]};
+                OPCODE_STORE : imm_gen_out = {{20{IF_ID_instr[31]}}, IF_ID_instr[31:25], IF_ID_instr[11:7]};
+                default      : imm_gen_out = '0;
+            endcase
         end
     end
 
     // ID/EX pipeline register
-    always_ff @(posedge clk or posedge reset) begin
+    always_ff @(posedge clk or posedge reset) begin //ID
         if (reset) begin
             ID_EX_pc <= '0;
             ID_EX_rs1_data <= '0;
@@ -238,7 +237,7 @@ module riscv_pipeline #(
     end
 
     // EX/MEM pipeline register
-    always_ff @(posedge clk or posedge reset) begin
+    always_ff @(posedge clk or posedge reset) begin  //ex/
         if (reset) begin
             EX_MEM_alu_result <= '0;
             EX_MEM_rs2_data <= '0;
@@ -262,7 +261,7 @@ module riscv_pipeline #(
     assign data_we = EX_MEM_mem_write;
 
     // MEM/WB pipeline register
-    always_ff @(posedge clk or posedge reset) begin
+    always_ff @(posedge clk or posedge reset) begin //MEM
         if (reset) begin
             MEM_WB_alu_result <= '0;
             MEM_WB_mem_data <= '0;
@@ -277,7 +276,7 @@ module riscv_pipeline #(
     end
 
     // WB stage
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk) begin //WB
         if (MEM_WB_reg_write) begin
             reg_file[MEM_WB_rd] <= MEM_WB_mem_data;
         end

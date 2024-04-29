@@ -1,0 +1,14 @@
+s1(26Apr2024:10:21:26):  xrun riscv_stub.sv ../tb/riscv_stub_tb.sv -access +rwc -gui 
+s2(26Apr2024:10:43:54):  xrun riscv_stub.sv ../tb/riscv_stub_tb.sv -access +rwc -gui 
+s3(26Apr2024:10:46:41):  xrun riscv_stub.sv ../tb/riscv_stub_tb.sv -access +rwc -gui 
+s4(26Apr2024:10:48:38):  xrun riscv_stub.sv ../tb/riscv_stub_tb.sv -access +rwc -gui 
+s5(26Apr2024:10:49:17):  xrun riscv_stub.sv ../tb/riscv_stub_tb.sv -access +rwc -gui 
+s6(26Apr2024:10:50:31):  xrun riscv_stub.sv ../tb/riscv_stub_tb.sv -access +rwc -gui 
+s7(26Apr2024:10:52:30):  xrun riscv_stub.sv ../tb/riscv_stub_tb.sv -access +rwc -gui 
+s8(26Apr2024:10:52:50):  xrun riscv_stub.sv ../tb/riscv_stub_tb.sv -access +rwc -gui 
+s9(26Apr2024:10:56:42):  xrun riscv_stub.sv ../tb/riscv_stub_tb.sv -access +rwc -gui 
+s10(26Apr2024:10:57:11):  xrun riscv_stub.sv ../tb/riscv_stub_tb.sv -access +rwc -gui 
+s11(28Apr2024:19:40:45):  xrun riscv_stub.sv ../tb/riscv_stub_tb.sv -access +rwc -gui 
+s12(28Apr2024:19:46:26):  xrun riscv_stub.sv ../tb/riscv_stub_tb.sv -access +rwc -gui 
+s13(28Apr2024:19:48:03):  xrun riscv_stub.sv ../tb/riscv_stub_tb.sv -access +rwc -gui 
+s14(28Apr2024:19:48:07):  xrun riscv_stub.sv ../tb/riscv_stub_tb.sv -access +rwc -gui 
