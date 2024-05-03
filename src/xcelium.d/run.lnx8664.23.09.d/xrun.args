@@ -1,0 +1,9 @@
+//
+// File created by:  xrun
+// Do not modify this file
+//
+riscv_stub.sv
+../tb/riscv_stub_tb.sv
+-access
++rwc
+-gui

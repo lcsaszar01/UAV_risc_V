@@ -73,6 +73,8 @@ module riscv_stub_tb;
 
             // ID Stage
             $display("ID Stage:");
+			$display("  rs1Data: %d", dut.rd1);			//add tests for hazard
+			$display("  rs2Data: %d", dut.rs2);
             $display("  Opcode: %b", dut.opcode);
             $display("  Rs1 Address: %d", dut.IF_ID_instr[19:15]);
             $display("  Rs2 Address: %d", dut.IF_ID_instr[24:20]);

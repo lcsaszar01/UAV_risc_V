@@ -75,18 +75,19 @@ module riscv_pipeline #(
 
     // IF stage
     logic [DATA_WIDTH-1:0] pc_reg, pc_next;
-    always_ff @(posedge clk or posedge reset) begin
+    always_ff @(posedge clk or posedge reset) begin //IF
         if (reset) begin
             pc_reg <= '0;
         end else begin
             pc_reg <= pc_next;
         end
     end
-    assign pc_next = pc_reg + 4;
-    assign instr_addr = pc_reg;
+
+//    assign pc_next = pc_reg + 4;
+//    assign instr_addr = pc_reg;
 
     // IF/ID pipeline register
-    always_ff @(posedge clk or posedge reset) begin
+    always_ff @(posedge clk or posedge reset) //begin //ID
         if (reset) begin
             IF_ID_pc <= '0;
             IF_ID_instr <= '0;
@@ -94,7 +95,7 @@ module riscv_pipeline #(
             IF_ID_pc <= pc_reg;
             IF_ID_instr <= instr_data;
         end
-    end
+//    end
 
     // ID stage
     assign opcode = opcode_t'(IF_ID_instr[6:0]);
@@ -162,33 +163,32 @@ module riscv_pipeline #(
 
     // Instruction Decode Stage with Hazard Detection
     HazardDetectionUnit hazard_unit (
-        .opcode1(instr[6:0]), // Opcode of the current instruction
-        .opcode2(instr[6:0]), // Opcode of the next instruction
-        .rd1(instr[11:7]),    // Destination register of the current instruction
-        .rs2(instr[24:20]),   // Source register of the next instruction
+        .opcode1(imm_gen_out), // Opcode of the current instruction
+        .opcode2(imm_gen_out), // Opcode of the next instruction
+        .rd1Data(IF_ID_instr[11:7]),    // Destination register of the current instruction
+        .rs2Data(IF_ID_instr[24:20]),   // Source register of the next instruction
         .hazard(hazard)       // Hazard signal
     );
 
     // Immediate generator
     always_comb begin
         begin
-        if(hazard) //stall if hazard is detected
-            rs1Data = 0; // Set inputs to ALU to 0
-            rs2Data = 0;
+        if(hazard) begin //stall if hazard is detected
+			alu_op_t = 0	// Set inputs to ALU to 0
+            alu_src_b_t = 0
+            end else begin // THE ERROR IS OCCURING HERE!
+			case (opcode)
+                OPCODE_OP_IMM: imm_gen_out = {{20{IF_ID_instr[31]}}, IF_ID_instr[31:20]};
+                OPCODE_LOAD  : imm_gen_out = {{20{IF_ID_instr[31]}}, IF_ID_instr[31:20]};
+                OPCODE_STORE : imm_gen_out = {{20{IF_ID_instr[31]}}, IF_ID_instr[31:25], IF_ID_instr[11:7]};
+                default      : imm_gen_out = '0;
+            endcase
         end
-        else // Proceed normally
-        begin
-        case (opcode)
-            OPCODE_OP_IMM: imm_gen_out = {{20{IF_ID_instr[31]}}, IF_ID_instr[31:20]};
-            OPCODE_LOAD  : imm_gen_out = {{20{IF_ID_instr[31]}}, IF_ID_instr[31:20]};
-            OPCODE_STORE : imm_gen_out = {{20{IF_ID_instr[31]}}, IF_ID_instr[31:25], IF_ID_instr[11:7]};
-            default      : imm_gen_out = '0;
-        endcase
-        end
-    end
+   	  end
+	end 
 
     // ID/EX pipeline register
-    always_ff @(posedge clk or posedge reset) begin
+    always_ff @(posedge clk or posedge reset) begin //ID
         if (reset) begin
             ID_EX_pc <= '0;
             ID_EX_rs1_data <= '0;
@@ -238,7 +238,7 @@ module riscv_pipeline #(
     end
 
     // EX/MEM pipeline register
-    always_ff @(posedge clk or posedge reset) begin
+    always_ff @(posedge clk or posedge reset) begin  //ex/
         if (reset) begin
             EX_MEM_alu_result <= '0;
             EX_MEM_rs2_data <= '0;
@@ -262,7 +262,7 @@ module riscv_pipeline #(
     assign data_we = EX_MEM_mem_write;
 
     // MEM/WB pipeline register
-    always_ff @(posedge clk or posedge reset) begin
+    always_ff @(posedge clk or posedge reset) begin //MEM
         if (reset) begin
             MEM_WB_alu_result <= '0;
             MEM_WB_mem_data <= '0;
@@ -277,7 +277,7 @@ module riscv_pipeline #(
     end
 
     // WB stage
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk) begin //WB
         if (MEM_WB_reg_write) begin
             reg_file[MEM_WB_rd] <= MEM_WB_mem_data;
         end
@@ -289,11 +289,11 @@ endmodule
 // Hazard Detection Unit Module
 // Produced by chatGPT, modifed by team
 module HazardDetectionUnit (
-    input logic [6:0] opcode1, // Opcode of the first instruction
-    input logic [6:0] opcode2, // Opcode of the second instruction
+    input logic [7:0] opcode1, // Opcode of the first instruction
+    input logic [7:0] opcode2, // Opcode of the second instruction
     input logic [4:0] rd1,     // Destination register of the first instruction
     input logic [4:0] rs2,     // Source register of the second instruction
-    output logic hazard         // Hazard signal indicating a hazard
+    output logic hazard        // Hazard signal indicating a hazard
 );
     // Data Hazard Detection Logic
     always_comb begin
@@ -301,10 +301,12 @@ module HazardDetectionUnit (
         if (opcode1 != 7'b0000011 && opcode2 != 7'b0000011) begin // Exclude load instructions
             if (rd1 != 5'b00000 && rd1 == rs2) begin // Check if destination register of first instruction matches source register of second instruction
                 hazard = 1'b1; // Hazard detected
-            end else begin
+            end 
+			else begin
                 hazard = 1'b0; // No hazard
             end
-        end else begin
+        end 
+		else begin
             hazard = 1'b0; // No hazard for load instructions
         end
     end
