@@ -163,10 +163,10 @@ module riscv_pipeline #(
 
     // Instruction Decode Stage with Hazard Detection
     HazardDetectionUnit hazard_unit (
-        .opcode1(instr[7:0]), // Opcode of the current instruction
-        .opcode2(instr[7:0]), // Opcode of the next instruction
-        .rd1(instr[11:7]),    // Destination register of the current instruction
-        .rs2(instr[24:20]),   // Source register of the next instruction
+        .opcode1(imm_gen_out), // Opcode of the current instruction
+        .opcode2(imm_gen_out), // Opcode of the next instruction
+        .rd1Data(IF_ID_instr[11:7]),    // Destination register of the current instruction
+        .rs2Data(IF_ID_instr[24:20]),   // Source register of the next instruction
         .hazard(hazard)       // Hazard signal
     );
 
@@ -174,8 +174,8 @@ module riscv_pipeline #(
     always_comb begin
         begin
         if(hazard) begin //stall if hazard is detected
-            rs1Data = 0; 	// Set inputs to ALU to 0
-            rs2Data = 0;
+			alu_op_t = 0	// Set inputs to ALU to 0
+            alu_src_b_t = 0
             end else begin // THE ERROR IS OCCURING HERE!
 			case (opcode)
                 OPCODE_OP_IMM: imm_gen_out = {{20{IF_ID_instr[31]}}, IF_ID_instr[31:20]};
@@ -184,7 +184,8 @@ module riscv_pipeline #(
                 default      : imm_gen_out = '0;
             endcase
         end
-    end
+   	  end
+	end 
 
     // ID/EX pipeline register
     always_ff @(posedge clk or posedge reset) begin //ID
