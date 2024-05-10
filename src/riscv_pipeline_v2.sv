@@ -70,6 +70,9 @@ module riscv_pipeline #(
     logic mem_read, mem_write, reg_write;
     logic [DATA_WIDTH-1:0] imm_gen_out;
 
+    //STALL Option Conditions
+    //stall:= 
+
     // IF stage
     logic [DATA_WIDTH-1:0] pc_reg, pc_next;
     always_ff @(posedge clk or posedge reset) begin //IF
@@ -80,6 +83,8 @@ module riscv_pipeline #(
         end
     end
 
+//    assign pc_next = pc_reg + 4;
+//    assign instr_addr = pc_reg;
 
     // IF/ID pipeline register
     always_ff @(posedge clk or posedge reset) //begin //ID
@@ -90,7 +95,7 @@ module riscv_pipeline #(
             IF_ID_pc <= pc_reg;
             IF_ID_instr <= instr_data;
         end
-//    end
+//   end
 
     // ID stage
     assign opcode = opcode_t'(IF_ID_instr[6:0]);
@@ -159,6 +164,10 @@ module riscv_pipeline #(
     // Immediate generator
     always_comb begin
         begin
+        if(hazard) begin //stall if hazard is detected
+			alu_op_t = 0	// Set inputs to ALU to 0
+            alu_src_b_t = 0
+            end else begin // THE ERROR IS OCCURING HERE!
 			case (opcode)
                 OPCODE_OP_IMM: imm_gen_out = {{20{IF_ID_instr[31]}}, IF_ID_instr[31:20]};
                 OPCODE_LOAD  : imm_gen_out = {{20{IF_ID_instr[31]}}, IF_ID_instr[31:20]};
@@ -167,6 +176,7 @@ module riscv_pipeline #(
             endcase
         end
    	  end
+	end 
 
     // ID/EX pipeline register
     always_ff @(posedge clk or posedge reset) begin //ID
@@ -266,3 +276,29 @@ module riscv_pipeline #(
 
 endmodule
 
+
+// Hazard Detection Unit Module
+// Produced by chatGPT, modifed by team
+module HazardDetectionUnit (
+    input logic [7:0] opcode1, // Opcode of the first instruction
+    input logic [7:0] opcode2, // Opcode of the second instruction
+    input logic [4:0] rd1,     // Destination register of the first instruction
+    input logic [4:0] rs2,     // Source register of the second instruction
+    output logic hazard        // Hazard signal indicating a hazard
+);
+    // Data Hazard Detection Logic
+    always_comb begin
+        // Check for read-after-write (RAW) hazard
+        if (opcode1 != 7'b0000011 && opcode2 != 7'b0000011) begin // Exclude load instructions
+            if (rd1 != 5'b00000 && rd1 == rs2) begin // Check if destination register of first instruction matches source register of second instruction
+                hazard = 1'b1; // Hazard detected
+            end 
+			else begin
+                hazard = 1'b0; // No hazard
+            end
+        end 
+		else begin
+            hazard = 1'b0; // No hazard for load instructions
+        end
+    end
+endmodule
